@@ -48,39 +48,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-  // ====== Локальные пользователи ======
-  const USERS = {
-    admin: { password: "admin123", role: "admin" },
-    irina: { password: "dog123", role: "user" },
-    guest: { password: "view", role: "readonly" }
-  };
-
   let currentUser = null;
 
-  function authenticate() {
-    const login = document.getElementById("login").value.trim();
-    const pass = document.getElementById("password").value.trim();
-
-    if (!USERS[login] || USERS[login].password !== pass) {
-      document.getElementById("loginError").innerText = "Неверный логин или пароль";
-      return;
-    }
-
-    currentUser = { login, ...USERS[login] };
-
-    document.getElementById("loginPanel").style.display = "none";
-    if (currentUser.role !== "readonly") document.getElementById("form").style.display = "flex";
-    document.querySelector(".export-btns").style.display = "flex";
-    document.getElementById("map").style.display = "block";
-
-    map.invalidateSize(); // Важно для корректного отображения карты
-    renderPolygons();
-  }
-
-  document.getElementById("loginBtn").addEventListener("click", authenticate);
-
   // ====== Firebase конфиг ======
- const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyDLam50xuih0zUwVT-2GPxLfeCgkj7r-38",
   authDomain: "searchdogszones.firebaseapp.com",
   databaseURL: "https://searchdogszones-default-rtdb.europe-west1.firebasedatabase.app",
@@ -92,19 +63,40 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const usersRef = db.ref("users");
   const polygonsRef = db.ref("zones");
   const drawnPolygons = {};
 
-  // ====== Карта ======
   const map = L.map('map').setView([55.94, 37.81], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // ====== Функции работы с зонами ======
+  function authenticate() {
+    const login = document.getElementById("login").value.trim();
+    const pass = document.getElementById("password").value.trim();
+
+    usersRef.child(login).once("value").then(snapshot => {
+      const user = snapshot.val();
+      if (!user || user.password !== pass) {
+        document.getElementById("loginError").innerText = "Неверный логин или пароль";
+        return;
+      }
+
+      currentUser = { login, role: user.role };
+      document.getElementById("loginPanel").style.display = "none";
+      if (currentUser.role !== "readonly") document.getElementById("form").style.display = "flex";
+      document.querySelector(".export-btns").style.display = "flex";
+      document.getElementById("map").style.display = "block";
+      map.invalidateSize();
+      renderPolygons();
+    }).catch(err => alert("Ошибка авторизации: " + err));
+  }
+
+  document.getElementById("loginBtn").addEventListener("click", authenticate);
+
   function parseCoords(text) {
-    const lines = text.trim().split("\n");
-    return lines.map(line => {
+    return text.trim().split("\n").map(line => {
       const parts = line.trim().split(/\s+/);
       return [parseFloat(parts[1]), parseFloat(parts[2])];
     });
@@ -112,6 +104,7 @@
 
   function saveZone() {
     if (!currentUser || currentUser.role === "readonly") return alert("Недостаточно прав");
+
     const raw = document.getElementById("coordsInput").value;
     const date = document.getElementById("dateInput").value;
     const person = document.getElementById("personInput").value;
@@ -120,12 +113,15 @@
 
     const coords = parseCoords(raw);
     const id = Date.now();
-    db.ref("zones/" + id).set({ coords, date, person, participants: [] });
-    alert("Зона сохранена");
 
-    document.getElementById("coordsInput").value = "";
-    document.getElementById("dateInput").value = "";
-    document.getElementById("personInput").value = "";
+    polygonsRef.child(id).set({ coords, date, person, participants: [] })
+      .then(() => {
+        alert("Зона сохранена");
+        document.getElementById("coordsInput").value = "";
+        document.getElementById("dateInput").value = "";
+        document.getElementById("personInput").value = "";
+      })
+      .catch(err => alert("Ошибка сохранения: " + err));
   }
 
   document.getElementById("saveBtn").addEventListener("click", saveZone);
@@ -168,8 +164,8 @@
     const name = prompt("Ваше ФИО:");
     const date = prompt("Дата выхода (ДД.MM.ГГГГ):");
     if (name && date) {
-      const ref = db.ref("zones/" + id + "/participants");
-      ref.once("value", snapshot => {
+      const ref = polygonsRef.child(id).child("participants");
+      ref.once("value").then(snapshot => {
         const arr = snapshot.val() || [];
         arr.push({ name, date });
         ref.set(arr);
@@ -181,13 +177,13 @@
   function deletePolygon(id) {
     if (currentUser.role !== "admin") return alert("Нет доступа");
     if (confirm("Удалить эту зону?")) {
-      db.ref("zones/" + id).remove();
+      polygonsRef.child(id).remove();
       alert("Удалено");
     }
   }
 
   function exportToCSV() {
-    polygonsRef.once("value", snapshot => {
+    polygonsRef.once("value").then(snapshot => {
       const data = snapshot.val();
       if (!data) return alert("Нет данных для экспорта.");
       let csv = "ID;Дата закладки;Закладчик;Координаты;Участники\n";
