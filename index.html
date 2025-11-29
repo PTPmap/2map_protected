@@ -80,15 +80,15 @@
   document.getElementById("loginBtn").addEventListener("click", authenticate);
 
   // ====== Firebase конфиг ======
-  const firebaseConfig = {
-    apiKey: "ВАШ_API_KEY",
-    authDomain: "ВАШ_ДОМЕН.firebaseapp.com",
-    databaseURL: "https://ВАШ_ДОМЕН.firebaseio.com",
-    projectId: "ВАШ_PROJECT_ID",
-    storageBucket: "ВАШ_PROJECT_ID.appspot.com",
-    messagingSenderId: "ВАШ_MESSAGING_ID",
-    appId: "ВАШ_APP_ID"
-  };
+ const firebaseConfig = {
+  apiKey: "AIzaSyDLam50xuih0zUwVT-2GPxLfeCgkj7r-38",
+  authDomain: "searchdogszones.firebaseapp.com",
+  databaseURL: "https://searchdogszones-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "searchdogszones",
+  storageBucket: "searchdogszones.firebasestorage.app",
+  messagingSenderId: "32308846124",
+  appId: "1:32308846124:web:5ec012be586903e7547b89"
+};
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
