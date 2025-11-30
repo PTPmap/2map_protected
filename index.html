@@ -36,7 +36,7 @@
         <button id="logoutBtn" onclick="logout()">Выйти</button>
       </div>
       <p id="loginError" style="color: red;"></p>
-      <p class="note">Примечание: пароли хранятся в базе (не в коде). Если логин не проходит — проверь ключи в ветке <code>users</code> в Realtime Database.</p>
+      
     </div>
 
     <div id="form">
@@ -67,18 +67,18 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-/* ================== CONFIG: вставь сюда свой firebaseConfig ================ */
-/* === PUT YOUR FIREBASE CONFIG HERE === */
+
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+   const firebaseConfig = {
+  apiKey: "AIzaSyDLam50xuih0zUwVT-2GPxLfeCgkj7r-38",
+  authDomain: "searchdogszones.firebaseapp.com",
+  databaseURL: "https://searchdogszones-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "searchdogszones",
+  storageBucket: "searchdogszones.firebasestorage.app",
+  messagingSenderId: "32308846124",
+  appId: "1:32308846124:web:5ec012be586903e7547b89"
 };
-/* ======================================================================== */
+
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
